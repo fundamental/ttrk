@@ -1,0 +1,52 @@
+   b-tektracker
+   ============
+
+   b-tektracker is an advanced MIDI step-sequencer.
+it is a fork of tektracker by Billy Biggs (http://vektor.ca/audio/ttrk/),
+which is not actively developed for now.
+   
+   README from tektracker distribution (v 0.7.0) follows:
+
+
+   tektracker (ttrk)
+   =================
+
+  ttrk is the product of frustration with bad step editors found on
+pretty much all MIDI sequencers available today.  I'm a big fan of
+trackers, and I wanted to be able to compose MIDI music using a tracker
+paradigm.
+
+  There are five main goals of ttrk:
+
+  1. Tracker-style step editor, think ScreamTracker3.
+  2. Pattern based sequencer.
+  3. Big, accessable track mute buttons, think Alesis MMT8.
+  4. Realtime editing, never need to push stop.
+  5. All functions directly accessable from the keyboard for rapid
+     editing.
+
+  ttrk started in the spring of 1999 as a Qt application.  I used it to
+record a bunch of songs (http://mp3.com/bitblit) and some live shows,
+but it was very much hacked together based on what I needed at the time.
+Keeping a GUI app up to date is a pain in the ass, and ttrk has been in
+need of a rewrite ever since.
+
+  The urge to create a console version was two-fold:
+
+  1. I wanted to use my old computer as a dedicated sequencer, and it
+     doesn't run X.
+  2. To create a sequencer, you need to run as root.  I don't like
+     running big X apps as root.
+
+  There are some files to help you use ttrk:
+
+  - docs/keys.txt       Detailed explanation of all keyboard commands.
+  - docs/usage.txt      Detailed notes on how to use ttrk.
+
+  I hope that this application will be of some use to you.  If you find
+any bugs or have any suggestions, please let me know.
+
+  Billy Biggs
+  ttrk@dumbterm.net
+  Feb 2001
+

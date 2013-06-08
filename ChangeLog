@@ -1,0 +1,128 @@
+b-tektracker:
+
+Version 0.8.2, Wed Aug 30 15:39:31 MSD 2006
+- added config file option to toggle current row highlighting.
+
+Tue Aug 29 21:13:25 EDT 2006 (Sam)
+- added function to insert/delete rows to all channels in both pattern
+and song mode.  Bound to keys shift-B and shift-D.  This can be
+especially useful in song mode.
+(Note that we could use other shifted alpha keys for more functions,
+since I got rid of the uppercasing of keys in the main input loop.)
+- added confirmation before saving over an existing filename
+(did this after trashing a song accidentally by saving instead of loading...
+D'OH!)
+- when in pattern play mode say "Pattern" instead of "Playing" in 
+the top status line
+- ignore a few more special keys in inputBuffer()
+- don't beep when non-piano alphanumeric keys are pressed (like A, 1, etc)
+- added F1-F8 labels over each of the 8 on-screen channels.  Makes
+it easier to tell which function key to press to mute/unmute a channel.
+- added highlighting of the current row.
+- implemented copy and paste in song mode.  These functions copy the 
+entire channel (including pattern data and settigns such as volume,
+midi channel, name, etc).  Useful for re-ordering your channels.
+- also implemented row copy/paste in song mode.  These are bound
+to shift-C and shift-V.  Note that pasting a row doesn't insert
+a new row; instead it overwrites the pattern IDs in the current row.
+If you want to insert pasted rows, use shift-B to insert some blank
+rows first, then paste into the new rows.
+You can also copy and paste a range of rows.  First move to one
+end of the range and press shift-M to mark the row.  Then move
+to the other end of the range and press shift-C to copy the range
+of rows.  Finally move to the row where you want to paste, and press shift-V.
+
+Version 0.8.1, Wed Aug 16 14:56:26 MSD 2006
+- fixed inputBuffer() to ignore unknown keycodes and to use 
+del and left_arrow keys as synonym to ^H 
+
+Tue Aug 8 19:52:04 EDT 2006 (Sam)
+- quit confirmation no longer requires pressing the Enter key
+- added ability to play the current pattern in a loop; mapped
+this function to F12 (used to be rewind song).  
+While in pattern play mode, you can change to another pattern
+(via PageUp/Down in pattern mode, or by moving to a different
+row in song mode) and the new pattern will start to play after
+the current pattern finishes. 
+Use F9 to stop pattern play.
+
+Mon Aug 7 12:56:19 EDT 2006 (Sam)
+- when setting a note, only set the velocity (to the channel velocity)
+if the row was blank.
+- added confirmation when quitting
+
+Fri Aug 4 21:50:59 EDT 2006 (Sam)
+- added to song/sequence mode the ability to set a "NoteOff" pattern by
+pressing the Backspace key.  Much like a NoteOff row in pattern mode,
+a NoteOff pattern in a song silences that channel.
+
+Wed Aug 2 22:10:23 EDT 2006 (Sam)
+- in pattern mode, when not playing, notes are previewed as they are
+entered.  Unlike version 0.8.0, there is no delay; the next key press is 
+handled immediately.  Also, the note will continue to play until the next
+key is pressed.  This seems more tracker-like to me.
+- in song mode, you can now use the note entry keys to "jam".  This
+is useful to play around with ideas (without having to enter notes
+in pattern edit mode), or even to play in realtime while the song
+is playing.  Note that you will need to set your keyboard repeat delay
+to 250 ms for this to work properly.
+In X:   xset r rate 250
+In the Linux console:   kbdrate -d 250   # this is the default delay
+- Before this version, notes always had a default velocity of 64 (or hex 40).
+Now it is possible to override the default velocity for each channel.
+The key '@' is used to set the channel velocity.
+- changed the keys for transpose to '(' and ')', and updated the help page
+(which didn't list the old keys (' and \) anyway)
+- changed shiftNotes so that it also shifts the velocity and slide values
+- remember name of last loaded or saved file, and use that as the default
+value when the next load or save is invoked.
+- changed the inputBuffer method so that it can be passed an initial value
+(so far only used for filenames to be saved or loaded).  Also made sure
+that you can't backspace beyond the beginning of the input area into
+the prompt.
+
+Version 0.8.0, Wed Apr 26 03:57:26 MSD 2006
+- transport keys remapped, play from cursor added
+- make status messages disappear after some time
+- basic support for MIDI control changes (key '#' in pattern view)
+- fill pattern(s) by control changes by given start and end values (linear interpolation, key '^W')
+- input value command (key '='): input pattern numbers/note volumes/controller values directly.
+- fixed error reporting for loading/saving song
+- fixed tempo for loaded songs
+- Delete row (^D) and Insert blank row (^B) commands
+- note is played (and muted after delay) when inserted (in pattern view, only when song is'nt playing)
+	parameter for that delay added to .ttrkrc (note_preview = time_in_tenth_of_second),
+	default value is 5, 0 means "no note preview"
+- SLang_input_pending(0) substituted by SLang_input_pending(1) which lowers cpu usage
+- keyboard help is removed from the main views, separate help page added (key '?')
+
+tektracker:
+
+Version 0.7.0, Wed Jun 30 00:04:49 EDT 2004
+ - update to newer autoconf
+ - compile fixes for gcc-3
+
+Version 0.6.8, Tue Feb 13 11:40:08 EST 2001
+ - forgot to include config.h in screen.cpp
+
+Version 0.6.7, Tue Feb 13 11:31:25 EST 2001
+ - set the default RTC resolution down to 1024hz, since higher is too
+   much for slower machines, and is more than necessary.
+ - we now use a ttrkrc file, located in ~/.ttrkrc.   See
+   docs/ttrkrc.sample.
+ - now check for SLsmg_reinit_smg before using it.  This lets our app
+   still work with older versions of slang.
+ - we now check for slang installations where the slang include files
+   are in either /usr/include/slang or $prefix/slang.
+ - we now use the ttrkrc file for everything, no more setting
+   environment variables.
+
+Version 0.6.6,  Sun Feb 11 16:02:08 EST 2001
+ - autoconf and automake'ed everything.  Makes it much more pleasant.
+
+Version 0.6.5,  Sun Feb 11 12:14:12 EST 2001
+ - added a #ifdef for kernel versions > 2.4.0 to let me use rtc.h
+   (barknech@ph-cip.uni-koeln.de)
+ - fixed the slide button '`' so that it properly moves down the cursor
+   and refreshes.
+

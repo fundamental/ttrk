@@ -1,0 +1,65 @@
+b-tektracker FAQ
+<boo_boo@inbox.ru>
+
+General:
+
+Q: Why did you forked from the tektracker?
+A: Tektracker is'nt developing now, but i badly need some features.
+
+Q: Is b-tektracker song file format compatible with tektracker?
+A: No: bttrk can load tektracker song, but saves to its own format.
+
+
+Problems:
+
+Q: Program refuses to run, with error message about "RealTimeClock: Cannot 
+open /dev/rtc" or "RealTimeClock: cannot set ownership of /dev/rtc"
+displayed.
+A: bttrk uses /dev/rtc realtime clock device to get acceptable sync. make 
+sure you have appropriate permissions and /dev/rtc is'nt used by another
+application.
+Simplest solution to get /dev/rtc access is to run bttrk as root, 
+but the best way is to use 'realtime-lsm' 
+(http://sourceforge.net/projects/realtime-lsm/) or 'rlimits' linux kernel 
+module to setup realtime priveleges for a non-root user.
+
+Q: Is it possible to use bttrk with <some> softsynth?
+A: Yes. You need to setup message forwarding from raw MIDI device to 
+softsynth MIDI input.
+In case of ALSA sound system this is fairly easy: load snd_virmidi driver,
+setup bttrk to use its device file (see 'mididev' option in .bttrkrc),
+then use aconnect (or kaconnect, or such) to attach virmidi output port 
+to softsynth input port.
+
+Q: When I try to play the keyboard like a piano in song mode, a note
+plays twice when I hold a key down.  What's wrong?
+A: The short answer is that you need to change your keyboard repeat delay
+to a smaller value.  We suggest 250ms because that's the smallest
+value you can set it to at the Linux console.
+At the Linux console:
+  kbdrate -d 250   # you will most likely have to run this command as root
+In X:
+  xset r rate 250
+
+Here's the long answer:
+The library that bttrk uses to handle keyboard input can report
+that a key was pressed, but cannot report when it was released.
+So bttrk checks for a keypress every tenth of a second.  If it gets
+a keypress and isn't already playing a note, it starts playing.
+If it gets a keypress and was already playing that same note, it continues
+playing that same note. 
+If it gets a keypress and was already playing a different note,
+it stops the old note and starts playing the new note.
+If it doesn't get a keypress, it checks to see if 250ms have passed
+since the last keypress.  If 250ms have passed, it stops the note.
+If less than 250ms have passed, it lets the note continue to play.
+This can happen when you're holding a key down, but not enough time
+has passed for the repeat delay to expire.
+
+The drawback to this approach is that if you try to tap the same note very
+quickly repeatedly, bttrk will treat it as if you held the key down.
+It would be nice if we could set the repeat delay to one tenth of a second,
+and while we can do that in X, we can't do it for the Linux console.
+
+
+

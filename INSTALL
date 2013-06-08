@@ -1,0 +1,9 @@
+
+  Run ./configure && make && make install as normal.
+  All we create is the binary called 'bttrk'.
+
+  to run b-tektracker you'll need the .bttrkrc file in your home directory.
+  see '.bttrkrc-sample' which is included in distribution. 
+
+  ttrk requires the S-Lang library and headers to compile.
+

@@ -1,0 +1,27 @@
+##########################################################################
+# The .bttrkrc file contains all of the default settings for b-tektracker.
+# All names and values are case insensitive, and all spaces are ignored.
+#
+# As you can probably tell, the # character is a comment in this file.
+
+# Sets the initial tempo when ttrk starts up.
+initial_tempo = 140
+
+# Set this to true if you want ttrk to startup using external sync.
+start_external_sync = false
+
+# The rtc frequency for root access, low or high.  This is used to
+# throttle our realtime thread when using internal sync.  At a setting
+# of low, the rtc wakes us up at a frequency of 1024hz.  At high, the
+# frequency is 8192hz.  Arguably, you should never need more than
+# 1024hz.
+rtc_frequency = low
+
+# Sets the raw MIDI device filename to use.  By default, ttrk will
+# attempt to use /dev/midi00.
+# NOTE: if you wanna use some softsynth with ALSA, the easiest way 
+# is to use virtual raw midi driver, and enter its device name here
+mididev = /dev/midi00
+
+#set current row highlighting
+highlight_curr_row = 1
