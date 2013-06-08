@@ -233,7 +233,7 @@ void PatBar::controllerToString( char *str, int cnum ) const
 void PatBar::printPatLine( int i, bool currRow ) const
 {
 	char note[ 4 ] = "---";
-	char *slide = "-";
+	const char *slide = "-";
 	int vol = 64;
 	int printrow;
 

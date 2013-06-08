@@ -47,7 +47,7 @@ static const int SL_KEY_SHIFTLEFT = 0x1003;
 static const int SL_KEY_SHIFTRIGHT = 0x1004;
 static const int END_OF_ROWS_MARKER = -99;
 
-static void inputBuffer( char *prompt, char *value )
+static void inputBuffer( const char *prompt, const char *value )
 {
 	int i = 0;
 	unsigned int c;
@@ -87,7 +87,7 @@ static void inputBuffer( char *prompt, char *value )
 		SLsmg_erase_eol();
 }
 
-static bool confirm( char *prompt )
+static bool confirm( const char *prompt )
 {
 	unsigned int c;
 	SLsmg_gotorc( SLtt_Screen_Rows - 1, 0 );
@@ -547,8 +547,8 @@ bool Screen::pollScreen( void )
 
 void Screen::printHeader( void ) const
 {
-	char *status;
-	char *loopstat;
+	const char *status;
+	const char *loopstat;
 	char tempo[ 4 ];
 
 	if( ttrkSong.isPlaying() ) {
@@ -627,7 +627,7 @@ void Screen::printSidebar( void ) const
 void Screen::printHelp( void )
 {
 	int currow=0;
-	char kformat[]="%30s  %30s";
+	const char *kformat="%30s  %30s";
 	
 	SLsmg_cls();
 	SLsmg_set_color( Screen::HelpColour );
@@ -697,7 +697,7 @@ void Screen::printHelp( void )
 	refresh_bars();
 }
 
-void Screen::showStatusMessage( char *newmsg )
+void Screen::showStatusMessage( const char *newmsg )
 {
 	SLsmg_set_color( Screen::StatusColour );
 	
@@ -861,7 +861,7 @@ void Screen::enterChanName( void )
 
 void Screen::enterVelocity( void )
 {
-	int cvel;
+	unsigned cvel;
 	inputBuffer( "Enter Channel Velocity [0-7f]: ", "" );
 	sscanf(inputbuf,"%x",&cvel);
 		
@@ -1026,7 +1026,7 @@ void Screen::setNote( int newnote )
 
 void Screen::setController( void )
 {
-	int cnum;
+	unsigned cnum;
 	
 	if( patmode ) {
 		inputBuffer( "Controller number [0-7f]: ", "" );
@@ -1045,7 +1045,7 @@ void Screen::setController( void )
 
 void Screen::inputValue( void )
 {
-	int val;
+	unsigned val;
 	
 	if( patmode ) {
 		inputBuffer( "Value [0-7f]: ", "" );
@@ -1069,7 +1069,8 @@ void Screen::inputValue( void )
 
 void Screen::ctlLinearFill( void )
 {
-	int cnum, beats, vfrom, vto;
+    int beats;
+	unsigned cnum, vfrom, vto;
 	
 	if(!patmode) return;
 		

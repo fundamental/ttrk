@@ -43,7 +43,7 @@ public:
 	bool pollScreen( void );
 	void refresh( void ) const;
 	void refresh_bars( void );
-	void showStatusMessage( char *newmsg );
+	void showStatusMessage( const char *newmsg );
 	void clearStatusMessage( void ) const;
 
 	enum ScreenSizes {

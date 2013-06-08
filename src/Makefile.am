@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = -Wall -pedantic
+AM_CXXFLAGS = -Wall -pedantic -DENABLE_SLFUTURE_CONST
 bin_PROGRAMS = bttrk
 bttrk_SOURCES = chanbar.cpp chanbar.h main.cpp midicontrol.cpp \
 	midicontrol.h mididev.h patbar.cpp patbar.h rawmidi.cpp \
