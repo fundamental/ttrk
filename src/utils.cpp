@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sched.h>
 #include <ctype.h>
 #include <stdio.h>

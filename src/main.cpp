@@ -23,6 +23,7 @@
 #include <midicontrol.h>
 #include <utils.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <rtctimer.h>
 
 int main( int argc, char **argv )

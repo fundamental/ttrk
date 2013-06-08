@@ -30,6 +30,8 @@
 #include <utils.h>
 #include <patbar.h>
 #include <songbar.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/timeb.h>
 
 using namespace std;
