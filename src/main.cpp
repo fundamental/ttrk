@@ -47,11 +47,11 @@ int main( int argc, char **argv )
 	}
 
 	// Exit the app if we failed up to this point.
-	if( !midiControl.isMidiDeviceOpen() ) {
-		fprintf( stderr, "\nNo MIDI device available, exiting.\n"
-			"Try setting a different device in your ~/.bttrkrc file.\n" );
-		return 1;
-	}
+	//if( !midiControl.isMidiDeviceOpen() ) {
+	//	fprintf( stderr, "\nNo MIDI device available, exiting.\n"
+	//		"Try setting a different device in your ~/.bttrkrc file.\n" );
+	//	return 1;
+	//}
 	
 	//test timer availability
 	RealTimeClock *rtc = new RealTimeClock();

@@ -38,7 +38,8 @@ MidiControl::~MidiControl( void )
 {
 	stop();
 	shutUp();
-	mididev->flush();
+    if(mididev)
+        mididev->flush();
 }
 
 void MidiControl::openMidiDevice( const char *filename )
@@ -74,6 +75,9 @@ void MidiControl::doNote( SongChannel *chan, SongPattern *pat,
 	bool slide = pat->getSlide( beat );
 	bool mute = chan->isMuted();
 
+    if(!mididev)
+        return;
+
 	// Shut up if we're in mute mode or a NoteOff is reached.
 	if( mute || note == Song::NoteOff ) {
 		if( last_note ) mididev->noteOff( mchan, last_note, data );
@@ -101,13 +105,15 @@ void MidiControl::doNote( SongChannel *chan, SongPattern *pat,
 // for jam mode
 void MidiControl::playNote( int chan, int note, int vel )
 {
-	mididev->noteOn( chan, note, vel );
+    if(mididev)
+        mididev->noteOn( chan, note, vel );
 }
 
 // for jam mode
 void MidiControl::stopNote( int chan, int note, int vel )
 {
-	mididev->noteOff( chan, note, vel );
+    if(mididev)
+        mididev->noteOff( chan, note, vel );
 }
 
 void MidiControl::doController( SongChannel *chan, SongPattern *pat,
@@ -117,11 +123,13 @@ void MidiControl::doController( SongChannel *chan, SongPattern *pat,
 	int cnum = pat->getController( beat );
 	int mchan = chan->getMidiChannel();
 		
-	if(cnum >= 0) mididev->controlChange( mchan, cnum, data );
+	if(cnum >= 0 && mididev) mididev->controlChange( mchan, cnum, data );
 }
 
 void MidiControl::shutUp( void )
 {
+    if(!mididev)
+        return;
 	for( int i = 0; i < 16; i++ ) mididev->allNotesOff( i );
 }
 
@@ -156,7 +164,8 @@ void MidiControl::rtcTimeCheck( void )
 			diff -= tt;
 			++midiclockcounter;
 			midiclockcounter %= 3;
-			mididev->syncTick();
+            if(mididev)
+                mididev->syncTick();
 			bcount++;
 			bcount %= 24;
 			if( bcount == 0 ) bp = true; else bp = false;
@@ -173,7 +182,8 @@ void MidiControl::rtcTimeCheck( void )
 		}
 
 		// Now write all the MIDI data.
-		mididev->flush();
+        if(mididev)
+            mididev->flush();
 
 		tvdiff.tv_sec = 0;
 		tvdiff.tv_usec = diff;
@@ -187,6 +197,8 @@ void MidiControl::rtcTimeCheck( void )
 void MidiControl::midiTimeCheck( void )
 {
 	int curmessage;
+    if(!mididev)
+        return;
 
 	curmessage = mididev->readMessage();
 
