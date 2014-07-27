@@ -18,19 +18,19 @@
 
 #include <sys/time.h>
 #include <unistd.h>
-#include <rawmidi.h>
-#include <song.h>
+#include "song.h"
 #include <stdio.h>
-#include <utils.h>
-#include <config.h>
-#include <rtctimer.h>
-#include <mididev.h>
-#include <midicontrol.h>
+#include "utils.h"
+#include "../config.h"
+//#include <rtctimer.h>
+#include "mididev.h"
+#include "midicontrol.h"
 
 MidiControl::MidiControl( void )
 	: mididev( 0 ), useintclock( true ), isrt( false ),
-		bp( false ), bcount( 0 ), rtcfreq( 1024 ),
+		bp( false ), bcount( 0 ), oldTime( 0 ), dt( 0 ),
 		midiclockcounter( 0 ), wasplaying( false )
+        
 {
 }
 
@@ -44,18 +44,8 @@ MidiControl::~MidiControl( void )
 
 void MidiControl::openMidiDevice( const char *filename )
 {
-	if( mididev != 0 ) delete mididev;
-
-	// Now open the device.  I'm scared this might block sometimes, so we
-	// had better announce what's going on to give a clue..
-	if( filename ) {
-		fprintf( stderr, "Using raw MIDI device %s "
-				"[from ~/.bttrkrc].\n", filename );
-		mididev = new RawMidi( filename, MidiDev::ReadWriteMode );
-	} else {
-		fprintf( stderr, "Using raw MIDI device /dev/midi00.\n" );
-		mididev = new RawMidi( "/dev/midi00", MidiDev::ReadWriteMode );
-	}
+	delete mididev;
+    mididev = new JackMidi();
 
 	if( !mididev->isOpen() ) {
 		delete mididev;
@@ -145,104 +135,39 @@ static void diffTimes( struct timeval *result, struct timeval *big,
 	}
 }
 
-void MidiControl::rtcTimeCheck( void )
+void MidiControl::jackTimeCheck( void )
 {
-	struct timeval tv;
-	struct timeval tvdiff;
-	struct timeval result;
-	int diff;
-	int tt = ttrkSong.getUsecpb() / 3;
+    mididev->updateStatus();
+    const size_t newTime = mididev->time;
+    const int tt = ttrkSong.getUsecpb() / 3;
+    dt += (newTime-oldTime)*1e6/mididev->Fs;
+    oldTime = newTime;
+    usleep(1000);
+    //on the off chance that something stupid produces NaN again...
+    assert(dt == dt);
+	
+    while( dt > tt ) {
 
-	// Throttle the box.
-	rtc->nextTick();
+        dt -= tt;
+        ++midiclockcounter;
+        midiclockcounter %= 3;
+        //if(mididev)
+        //    mididev->syncTick();
+        bcount++;
+        bcount %= 24;
+        bp = bcount == 0;
 
-	gettimeofday( &tv, 0 );
-	diff = (tv.tv_sec - last_sec) * 1000 * 1000 + tv.tv_usec - last_usec;
-
-	if( diff > tt ) {
-		while( diff > tt ) {
-			diff -= tt;
-			++midiclockcounter;
-			midiclockcounter %= 3;
-            if(mididev)
-                mididev->syncTick();
-			bcount++;
-			bcount %= 24;
-			if( bcount == 0 ) bp = true; else bp = false;
-
-			if( midiclockcounter == 0 && ttrkSong.isPlaying() ) {
-				if( wasplaying == false ) mididev->syncStart();
-				wasplaying = true;
-				doCurrentNotes();
-			} else if( wasplaying == true && !ttrkSong.isPlaying() ) {
-				wasplaying = false;
-				mididev->syncStop();
-				shutUp();
-			}
-		}
-
-		// Now write all the MIDI data.
-        if(mididev)
-            mididev->flush();
-
-		tvdiff.tv_sec = 0;
-		tvdiff.tv_usec = diff;
-		diffTimes( &result, &tv, &tvdiff );
-
-		last_sec = result.tv_sec;
-		last_usec = result.tv_usec;
-	}
-}
-
-void MidiControl::midiTimeCheck( void )
-{
-	int curmessage;
-    if(!mididev)
-        return;
-
-	curmessage = mididev->readMessage();
-
-	switch( curmessage ) {
-		case MidiDev::NoMessage: return;
-
-		case MidiDev::MIDIClockTick:
-			mididev->syncTick();
-
-			++midiclockcounter;
-			midiclockcounter %= 3;
-			bcount++;
-			bcount %= 24;
-			if( bcount == 0 ) bp = true; else bp = false;
-
-			if( midiclockcounter == 0 && ttrkSong.isPlaying() )
-				doCurrentNotes();
-			break;
-
-		case MidiDev::MIDIStart:
-			mididev->syncStart();
-
-			// Reset everything to the start
-			midiclockcounter = 0;
-			ttrkSong.rewind();
-			ttrkSong.start();
-
-			// Better send out the current notes now.
-			doCurrentNotes();
-			break;
-
-		case MidiDev::MIDIStop:
-			mididev->syncStop();
-			ttrkSong.stop();
-			shutUp();
-			break;
-
-		case MidiDev::MIDIContinue:
-			mididev->syncContinue();
-			ttrkSong.start();
-			break;
-	}
-
-	mididev->flush();
+        if( midiclockcounter == 0 && ttrkSong.isPlaying() ) {
+            //if(!wasplaying)
+            //    mididev->syncStart();
+            wasplaying = true;
+            doCurrentNotes();
+        } else if(wasplaying && !ttrkSong.isPlaying() ) {
+            wasplaying = false;
+            //mididev->syncStop();
+            shutUp();
+        }
+    }
 }
 
 void MidiControl::doCurrentNotes( void )
@@ -265,39 +190,12 @@ void MidiControl::doCurrentNotes( void )
 
 void MidiControl::thread_main( void )
 {
-	struct timeval tv;
-	int rt;
-
 	// If we're root, get realtime priority.
-	rt = set_realtime_priority();
-
-	// Initialize for internalTimeCheck().
-	gettimeofday( &tv, 0 );
-	last_sec = tv.tv_sec;
-	last_usec = tv.tv_usec;
-
-	// Initialize for rtcTimeCheck();
-	rtc = new RealTimeClock();
-	
-	if( rt < 0 ) {
-		// We're not root.  Setup for shitty rtc resolution.
-		rtc->setInterval( 64 );
-		isrt = false;
-	} else {
-		rtc->setInterval( rtcfreq );
-		isrt = true;
-	}
-	rtc->startClock();
-	last_diff = 0;
+	set_realtime_priority();
 
 	for(;;) {
 		testcancel();
-
-		if( useintclock ) {
-			rtcTimeCheck();
-		} else {
-			midiTimeCheck();
-		}
+        jackTimeCheck();
 	}
 }
 

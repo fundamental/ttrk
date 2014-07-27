@@ -1,8 +1,8 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.52)
-AC_INIT(bttrk, 0.8.2, boo_boo@inbox.ru)
+AC_INIT(ttrk, 0.8.2, mark.d.mccurry@gmail.com)
 AC_CONFIG_SRCDIR([src/chanbar.cpp])
-AM_INIT_AUTOMAKE(bttrk,0.8.2)
+AM_INIT_AUTOMAKE(ttrk,0.8.2)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 AC_CANONICAL_HOST
@@ -15,19 +15,19 @@ AC_PROG_LIBTOOL
 
 AC_MSG_CHECKING(for prefix)
 if test x$prefix = xNONE; then
-	bttrk_prefix=$ac_default_prefix
+	ttrk_prefix=$ac_default_prefix
 else
-	bttrk_prefix=$prefix
+	ttrk_prefix=$prefix
 fi
-AC_MSG_RESULT($bttrk_prefix)
+AC_MSG_RESULT($ttrk_prefix)
 
 dnl Checks for libraries.
 AC_CHECK_LIB(pthread, pthread_create)
 
 
 AC_MSG_CHECKING(for a s-lang specific include directory)
-if test -d $bttrk_prefix/include/slang; then
-	CPPFLAGS="$CPPFLAGS -I$bttrk_prefix/include/slang"
+if test -d $ttrk_prefix/include/slang; then
+	CPPFLAGS="$CPPFLAGS -I$ttrk_prefix/include/slang"
 	slang_specific=yes
 elif test -d /usr/include/slang; then
 	CPPFLAGS="$CPPFLAGS -I/usr/include/slang"
@@ -46,6 +46,8 @@ dnl [AC_DEFINE(HAVE_SLSMG_REINIT_SMG) AC_MSG_RESULT(yes)],
 dnl AC_MSG_RESULT(no))
 
 AC_CHECK_LIB(z, gzopen)
+AC_CHECK_LIB(rtosc, rtosc_message)
+AC_CHECK_LIB(jack, jack_ringbuffer_create)
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(linux/rtc.h)

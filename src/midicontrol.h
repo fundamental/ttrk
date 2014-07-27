@@ -19,7 +19,8 @@
 #ifndef MIDICONTROL_H_INCLUDED
 #define MIDICONTROL_H_INCLUDED
 
-#include <thread.h>
+#include "thread.h"
+#include "jackmidi.h"
 
 class SongChannel;
 class SongPattern;
@@ -40,7 +41,7 @@ public:
 	/**
 	 * Returns true if the MIDI device has been opened.
 	 */
-	bool isMidiDeviceOpen( void ) const { return (mididev != 0); }
+	bool isMidiDeviceOpen( void ) const { return mididev; }
 
 	/**
 	 * Returns true if we're running at realtime priority.
@@ -68,14 +69,6 @@ public:
 	 */
 	bool beatPulse( void ) const { return bp; }
 
-	/**
-	 * Set the RTC frequency for root access.  This can be either 1024 or
-	 * 8192 depending on how beefy your system is.  The default is 1024, to
-	 * be nice to slower machines.
-	 */
-	void setRTCFrequency( int newfreq ) { rtcfreq = newfreq; }
-
-	
 	// Play a note out a channel.
 	void doNote( SongChannel *chan, SongPattern *pat, unsigned int beat );
 	
@@ -92,20 +85,16 @@ public:
     void stopNote( int chan, int note, int vel );
 		
 private:
-	MidiDev *mididev;
+	JackMidi *mididev;
 	bool useintclock;
 	bool isrt;
 	bool bp;
 	int bcount;
-	int rtcfreq;
 
-	// Last sec/usec we sent a sync signal.
-	int last_sec;
-	int last_usec;
-	int last_diff;
-
-	// RTC device.
-	RealTimeClock *rtc;
+	// Old frame counter
+    size_t oldTime;
+    //Remaining delta information in usec
+    double dt;
 
 	// Our cheezy MIDI tick counter (24ppq for now).
 	int midiclockcounter;
@@ -113,8 +102,8 @@ private:
 	// Ugly hacked state information.
 	bool wasplaying;
 
-	// Do the next beat using RTC sync.
-	void rtcTimeCheck( void );
+	// Do the next beat using JACK synced events.
+	void jackTimeCheck( void );
 
 	// Check if we're into the next beat when using external midi sync.
 	void midiTimeCheck( void );

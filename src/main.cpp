@@ -19,18 +19,17 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif // HAVE_CONFIG_H
-#include <screen.h>
-#include <midicontrol.h>
-#include <utils.h>
+#include "screen.h"
+#include "midicontrol.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <rtctimer.h>
 
 int main( int argc, char **argv )
 {
 	// Announcements.
-	fprintf( stderr, "b-ttrk version %s\n", VERSION );
-	fprintf( stderr, "by boo_boo(^at^)inbox.ru\n");
+	fprintf( stderr, "ttrk version %s\n", VERSION );
+	fprintf( stderr, "based on bttrk by boo_boo(^at^)inbox.ru\n");
 	fprintf( stderr, "with enhancements by sampbrauer(^at^)yahoo.com\n");
 	fprintf( stderr, "based on ttrk by billy biggs (http://vektor.ca/audio/ttrk/)\n" );
 	fprintf( stderr, "This is free software under the GNU GPL, "
@@ -43,8 +42,10 @@ int main( int argc, char **argv )
 	// If no device was specified in the config file, open the default MIDI
 	// device.
 	if( !midiControl.isMidiDeviceOpen() ) {
-		midiControl.openMidiDevice();
+        printf("OPENING MIDI DEVICE...\n");
+        midiControl.openMidiDevice();
 	}
+    printf("MIDI DEVICE SHOULD BE OPEN\n");
 
 	// Exit the app if we failed up to this point.
 	//if( !midiControl.isMidiDeviceOpen() ) {
@@ -52,14 +53,6 @@ int main( int argc, char **argv )
 	//		"Try setting a different device in your ~/.bttrkrc file.\n" );
 	//	return 1;
 	//}
-	
-	//test timer availability
-	RealTimeClock *rtc = new RealTimeClock();
-	if(!rtc->isInitialized()) {
-		fprintf( stderr, "\nTimer error, exiting.\n");
-		exit(EXIT_FAILURE);
-	}
-	delete rtc;
 	
 	// Load a file if one is specified.
 	if( argc > 1 ) {

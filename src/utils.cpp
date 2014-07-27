@@ -95,12 +95,6 @@ void add_setting( const char *name, const char *value )
 		if( strcmp( value, "true" ) == 0 ) {
 			midiControl.useExternalClock();
 		}
-	} else if( strcmp( name, "rtc_frequency" ) == 0 ) {
-		if( strcmp( value, "high" ) == 0 ) {
-			midiControl.setRTCFrequency( 8192 );
-		}
-	} else if( strcmp( name, "mididev" ) == 0 ) {
-		midiControl.openMidiDevice( value );
 	} else if( strcmp( name, "highlight_curr_row" ) == 0 ) {
 		PatBar::hilightCurrRow = (atoi(value) != 0);
 	} else {
