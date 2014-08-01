@@ -22,12 +22,15 @@
 #include <cassert>
 #include <cstring>
 #include <rtosc/rtosc.h>
+#include <jack/midiport.h>
 
 //TODO make these class specific or whatever
 static char pending_events[100][128];
 static void *midi_output_queue;
 static size_t current_time = 0;
+static size_t rel_frames = 0;
 static size_t last_time = 0;
+static void *port_buf = 0;
 FILE *f;
 int process(unsigned nframes, void *v);
 
@@ -77,57 +80,68 @@ JackMidi::~JackMidi( void )
 
 void JackMidi::noteOn(char chan, char note, char vel)
 {
-    int ev[3] = {0x90 | chan, note, vel};
+    char ev[4] = {char(0x90 | chan), note, vel, 0x00};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::noteOff(char chan, char note, char vel)
 {
-    int ev[3] = {0x80 | chan, note, vel};
+    char ev[4] = {char(0x80 | chan), note, vel, 0x00};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::polyphonicAftertouch(char chan, char note, char amt)
 {
-    int ev[3] = {0xA0 | chan, note, amt};
+    char ev[4] = {char(0xA0 | chan), note, amt, 0x00};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::programChange( char chan, char prog )
 {
-    int ev[3] = {0xC0 | chan, prog, 0};
+    char ev[4] = {char(0xC0 | chan), prog, 0};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::channelAftertouch( char chan, char amt )
 {
-    int ev[3] = {0xD0 | chan, amt, 0};
+    char ev[4] = {char(0xD0 | chan), amt, 0};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::pitchWheel( char chan, char amt )
 {
-    int ev[3] = {0xE0 | chan, 0x7F & amt, amt >> 7};
+    char ev[4] = {char(0xE0 | chan), char(0x7F & amt), char(amt >> 7)};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::controlChange( char chan, char controller, char amt)
 {
-    int ev[3] = { 0xB0 | chan, controller, amt};
+    char ev[4] = { char(0xB0 | chan), controller, amt};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::allSoundOff( char chan )
 {
-    int ev[3] = { 0xB0 | chan, 0x78, 0};
+    char ev[4] = {char(0xB0 | chan), 0x78, 0};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::resetAllControllers( char chan )
 {
-	int ev[3] = {0xB0 | chan, 0x79, 0};
+	int ev[4] = {0xB0 | chan, 0x79, 0};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::setLocal( char chan, bool on )
 {
-	int ev[3] = {0xB0 | chan, 0x7A, on ? 127 : 0};
+	char ev[4] = {char(0xB0 | chan), 0x7A, char(on ? 127 : 0)};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::allNotesOff( char chan )
 {
-	int ev[3] = {0xB0 | chan, 0x7B, 0};
+	char ev[4] = {char(0xB0 | chan), 0x7B, 0};
+    event(0, "/midi", "m", ev);
 }
 
 void JackMidi::syncStart( void )
@@ -154,56 +168,10 @@ void JackMidi::updateStatus( void )
 {
     if(jack_ringbuffer_read_space(bToU) >= 8)
         jack_ringbuffer_read(bToU, (char*)&time, sizeof(time));
-
 }
 
 MidiDev::InMessage JackMidi::readMessage( void )
 {
-//	unsigned char buff;
-//	int bytesread;
-//
-//
-//	struct pollfd pfd;
-//	int ret;
-//	pfd.fd = midi_fd;
-//	pfd.events = POLLIN | POLLERR;
-//
-//again:
-//	ret = poll( &pfd, 1, 1000 );
-//	if( ret < 0 ) {
-//		if (errno == EINTR) {
-//			// This happens mostly when run under gdb, or when
-//			// exiting due to a signal.
-//			goto again;
-//		}
-//		return NoMessage;
-//	}
-//
-//	if( ret == 0 ) return NoMessage;
-//
-//	buff = 0;
-//	bytesread = read( midi_fd, &buff, 1 );
-//
-//	if( bytesread < 1 ) {
-//		return NoMessage;
-//	}
-//
-//	if( buff == 0xFA ) {
-//		return MIDIStart;
-//	}
-//
-//	if( buff == 0xFB ) {
-//		return MIDIContinue;
-//	}
-//
-//	if( buff == 0xFC ) {
-//		return MIDIStop;
-//	}
-//
-//	if( buff == 0xF8 ) {
-//		return MIDIClockTick;
-//	}
-//
 	return MidiDev::NoMessage;
 }
 
@@ -211,6 +179,21 @@ void JackMidi::flush( void )
 {
 	//write( midi_fd, buff, buffpos );
 	//buffpos = 0;
+}
+    
+void JackMidi::event(size_t time, const char *dest, const char *args, ...)
+{
+    va_list va;
+    va_start(va,args);
+    char write_buffer[1024];
+    const size_t len =
+        rtosc_vmessage(write_buffer,1024,dest,args,va);
+    char bundle_buf[2048+sizeof(size_t)];
+    const size_t blen = rtosc_bundle(bundle_buf+sizeof(blen), 2048,
+            time, 1, write_buffer); 
+    *(size_t*)bundle_buf = blen;
+    if(jack_ringbuffer_write_space(uToB) >= blen && blen)
+        jack_ringbuffer_write(uToB,bundle_buf,blen+sizeof(blen));
 }
 
 void insert_pending(const char *msg,
@@ -226,12 +209,18 @@ void dispatch(const char *msg,
     if(rtosc_bundle_p(msg)) {
         if(rtosc_bundle_timetag(msg) <= current_time) {
             unsigned elements = rtosc_bundle_elements(msg, msg_size);
+            for(unsigned i=0; i<elements; ++i)
+                dispatch(rtosc_bundle_fetch(msg, i), rtosc_bundle_size(msg, i));
         } else
             insert_pending(msg, msg_size);
     } else { //normal message dispatch
         const char *args = rtosc_argument_string(msg);
-        if(!strcmp(msg, "/write_midi") && !strcmp(args, "b")) {
-            printf("Writing midi event\n");
+        if(!strcmp(msg, "/midi") && !strcmp(args, "m")) {
+            unsigned char *buffer = jack_midi_event_reserve(port_buf, rel_frames, 3);
+            rtosc_arg_t arg = rtosc_argument(msg,0);
+            for(int i=0; i<3; ++i)
+                buffer[i] = arg.m[i];
+            //printf("Writing midi event\n");
         }
     }
 }
@@ -243,7 +232,7 @@ void dispatch_events(size_t time)
         char *bundle = pending_events[i];
         if(!rtosc_bundle_p(bundle))
             continue;
-        if(rtosc_bundle_timetag(bundle) >= current_time) {
+        if(rtosc_bundle_timetag(bundle) <= current_time) {
             dispatch(bundle, rtosc_message_length(bundle, 128));
             for(int j=0; j<128; ++j)
                 bundle[j] = 0;
@@ -255,7 +244,19 @@ void dispatch_events(size_t time)
 int process(unsigned nframes, void *v)
 {
     JackMidi &jm = *(JackMidi*)v;
+    port_buf = jack_port_get_buffer(jm.port, nframes);
+    jack_midi_clear_buffer(port_buf);
     //Read incomming events
+    while(jack_ringbuffer_read_space(jm.uToB) > sizeof(size_t))
+    {
+        char buf[2048];
+        memset(buf, 0, sizeof(buf));
+        size_t len = 0;
+        jack_ringbuffer_read(jm.uToB, (char*)&len, sizeof(len));
+        assert(len && len <= 2048);
+        jack_ringbuffer_read(jm.uToB, buf, len);
+        dispatch(buf, len);
+    }
     
     //for(int i=0; i<nframes; ++i)
     //    dispatch_events(current_time++);

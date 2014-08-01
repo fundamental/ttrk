@@ -77,6 +77,8 @@ public:
 	// Other stuff.
 	void flush( void );
 
+    void event(size_t time, const char *dest, const char *args, ...);
+
     double Fs;
     size_t time;
 

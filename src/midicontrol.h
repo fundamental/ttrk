@@ -90,6 +90,7 @@ private:
 	bool isrt;
 	bool bp;
 	int bcount;
+	int rtcfreq;
 
 	// Old frame counter
     size_t oldTime;
