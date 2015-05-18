@@ -7,8 +7,8 @@ compiler:
 before_install:
     - git clone https://github.com/fundamental/rtosc
     - cd rtosc && mkdir build && cd build && cmake ..
-    - make && make install && cd ..
-    - sudo apt-get install libjack-dev
+    - make && sudo make install && cd ../..
+    - sudo apt-get install libjack-dev libslang2-dev
 
 script:
-    - autoreconf && ./configure && make 
+    - autoreconf --install && ./configure && make
