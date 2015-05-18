@@ -1,0 +1,14 @@
+language: cpp
+
+compiler:
+    - gcc
+    - clang
+
+before_install:
+    - git clone https://github.com/fundamental/rtosc
+    - cd rtosc && mkdir build && cd build && cmake ..
+    - make && make install && cd ..
+    - sudo apt-get install libjack-dev
+
+script:
+    - autoreconf && ./configure && make 
